@@ -9,11 +9,15 @@ void i2c_init(void)
 
 void i2c_start(void)
 {
-    // 1. Send the START command
+    // Send the START command
     TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
-    // 2. Wait for the hardware to finish
+    // Wait for the hardware to finish
     while ( !(TWCR & (1 << TWINT)) );
+	
+    // Check if the TWSR is actually setted to start (mask other bits)
+    if ((TWSR & 0xF8) != START)
+	ERROR();
 }
 
 void i2c_stop(void)
@@ -34,4 +38,8 @@ void i2c_write(uint8_t data)
                                     // indicates that the Write bit has
                                     // been transmitted, and
                                     // ACK/NACK has been received.
+    
+    if ((((TWSR & 0xF8) != MT_SLA_ACK) && ((TWSR & 0xF8) != MT_DATA_ACK)))
+    // Check in TWSR for the ACK bit both from data and peripheral address 
+    	ERROR();	
 }
